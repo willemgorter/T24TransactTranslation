@@ -1,0 +1,158 @@
+*-----------------------------------------------------------------------------
+* <Rating>340</Rating>
+*-----------------------------------------------------------------------------
+SUBROUTINE BLM.EXTRACT.INTEREST
+$INSERT I_COMMON
+$INSERT I_EQUATE
+$INSERT I_ENQUIRY.COMMON
+
+GOSUB INIT 
+GOSUB INIT.T24
+GOSUB MY.SELECTION
+GOSUB PROCESS
+RETURN
+
+*---------------------------------------------------
+INIT:
+*---------------------------------------------------
+MY.VERSION = 1
+Y.PATH = '/opt/jboss/T24/UD/&SAVEDLISTS&/'
+*Y.PATH = '.':SEP.REP:"&SAVEDLISTS&":SEP.REP
+Y.PATH = 'C:\T24R200717UTP\Temenos\t24home\default\&SAVEDLISTS&'
+Y.FILE = 'RESULT.RUN.PROGRAM.txt'
+MY.VAR = ''
+RETURN
+*---------------------------------------------------
+MY.SELECTION:
+*---------------------------------------------------
+
+RETURN
+
+
+*---------------------------------------------------
+PROCESS:
+*---------------------------------------------------
+CRT "You can pass 2 arguments: the version and a variable. If you don't pass a version number,"
+CRT "the default of ":MY.VAR:" is used. Example: 'tRun RUN.PROGRAM 1'"
+IF SENTENCE(1) NE '' THEN
+    MY.VERSION  = SENTENCE(1)
+END
+IF SENTENCE(2) NE '' THEN
+    MY.VAR = SENTENCE(2)
+END
+CRT " "
+CRT " "
+CRT " "
+CRT "Using version ":MY.VERSION
+DELETESEQ Y.PATH,Y.FILE THEN
+CRT 'Deleting ':Y.PATH:Y.FILE:" ..."
+END
+**********Selection************
+IF MY.VERSION EQ 1 THEN
+    D.FIELDS<1> = 'MENU.ID'
+	IF MY.VAR ELSE MY.VAR = 'CHEQUE.ENQ'
+    D.RANGE.AND.VALUE<1> = MY.VAR
+    OPERAND.VAL = "EQ"
+    GOSUB MY.OPERAND.TO.NUM
+    D.LOGICAL.OPERANDS<1> = NUMERIC.OPERAND
+END
+******************************
+CRT "Building list of records..."
+IF MY.VERSION EQ 1 THEN
+    CALL E.MENU.EXPORT(TXN.ARR)
+END
+IF TXN.ARR NE "" THEN
+    OPENSEQ Y.PATH,Y.FILE TO MYFILE  
+    ELSE CREATE MYFILE ELSE ABORT
+    WRITESEQ "Program PROGRAM.LAUNCHER;":TIMEDATE():";Selection1=":D.RANGE.AND.VALUE<1>:";Selection2=":D.RANGE.AND.VALUE<2>:";Selection3=":D.RANGE.AND.VALUE<3> TO MYFILE ELSE STOP
+    CRT "WRITING TO: ":Y.PATH:Y.FILE
+    Y.HEADER ="UniqueID;AccountID;Year;Month;Balance Type;Arrangement;ProductLine;Product;Category;"
+    Y.HEADER := "DAY.NO;TURNOVER.CREDIT;TURNOVER.DEBIT;BALANCE;"
+    CNT=1
+    LOOP WHILE TXN.ARR<CNT> NE ""
+            MYLINE = TXN.ARR<CNT>
+            MYLINE = EREPLACE(MYLINE,"~",";")
+            WRITESEQ MYLINE TO MYFILE ELSE
+                CRT "Cannot write line ":CNT
+            END
+            CNT=CNT+1
+            IF MOD(CNT,5000) EQ 0 THEN
+                 CRT "WRITING LINE ":CNT
+            END
+    REPEAT
+    CRT "FINISHED!"
+    WEOFSEQ MYFILE
+    CLOSESEQ MYFILE
+END
+RETURN
+
+*---------------------------------
+MY.OPERAND.TO.NUM:
+*---------------------------------
+    NUMERIC.OPERAND = ''
+    IF NUM(OPERAND.VAL) THEN
+       NUMERIC.OPERAND = OPERAND.VAL
+       RETURN
+    END
+
+    BEGIN CASE
+        CASE OPERAND.VAL EQ 'EQ'
+            NUMERIC.OPERAND = 1
+        CASE OPERAND.VAL EQ 'RG'
+            NUMERIC.OPERAND = 2
+            IF NOT(INDEX(Y.VALUE, ' ', 1)) THEN
+                Y.VALUE = Y.VALUE:VM:Y.VALUE
+            END ELSE
+                Y.START.VALUE = FIELD(Y.VALUE, ' ', 1)
+                Y.END.VALUE = FIELD(Y.VALUE, ' ', 2)
+                Y.VALUE = Y.START.VALUE:@VM:Y.END.VALUE
+            END
+        CASE OPERAND.VAL EQ 'LT'
+            NUMERIC.OPERAND = 3
+        CASE OPERAND.VAL EQ 'GT'
+            NUMERIC.OPERAND = 4
+        CASE OPERAND.VAL EQ 'NE'
+            NUMERIC.OPERAND = 5
+        CASE OPERAND.VAL EQ 'LK'
+            NUMERIC.OPERAND = 6
+        CASE OPERAND.VAL EQ 'UL'
+            NUMERIC.OPERAND = 7
+        CASE OPERAND.VAL EQ 'LE'
+            NUMERIC.OPERAND = 8
+        CASE OPERAND.VAL EQ 'GE'
+            NUMERIC.OPERAND = 9
+    END CASE
+
+    RETURN
+*-----------------------------------------
+INIT.T24:
+*-----------------------------------------
+    RETURN.CODE = ''
+    OS.TYPE = SYSTEM(1017)
+    IF OS.TYPE <> 'UNIX' THEN
+        OS.TYPE = 'NT'
+    END
+    IF OS.TYPE = "UNIX" THEN
+        SEP.REP = "/"
+    END ELSE
+        SEP.REP = "\"
+    END
+    CRT " "
+    CRT " "
+    CRT "Initialising T24..."
+    CALL T24.INITIALISE
+    CRT " "
+    CRT " "
+    CRT "T24 initialised."
+
+    CRT "Initialising Common Variables..."
+    CALL S.INITIALISE.COMMON
+    CRT "Common Variables initialised."
+
+    CRT "Loading Company..."
+    CALL LOAD.COMPANY ('GB0010001')
+    CRT "Company Loaded."
+
+    RETURN
+**----------------------------------------
+END

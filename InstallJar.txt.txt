@@ -1,0 +1,6 @@
+in a UTP jboss installation, the Temenos core jars would be in the following path: .\Temenos\jboss\modules\com\temenos\t24\main\t24lib
+
+To avoid confusion, create a separate folder for your own developments (like .\Temenos\jboss\modules\com\temenos\t24\main\LocalDev) and copy your renamed jar to this folder.
+
+In the “main” folder (just above t24lib, .\Temenos\jboss\modules\com\temenos\t24\main), there is a file module.xml, where the new jar should be added to the end of the “resources” list:
+ 
