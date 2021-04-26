@@ -3,7 +3,7 @@
 T24TransactTranslation is an Excel workbook containing macros in VBA, that connects to T24 Transact Banking Software to facilitate translating the Banking Software to a different language.
 
 ## Installation
-Extract the files. TranslationTool_V1_3_1.xlsx is the tool, the documentation is in the form of a Word document, TranslationTool_V1_3_1.docx
+Extract the files. T24TranslationTool.xlsx is the tool, the documentation is in the form of a Word document, TranslationTool_V1_3_1.docx, but that is no longer updated. The latest version of the documentation is in the [__wiki for this repository__](https://github.com/willemgorter/T24TransactTranslation/wiki)
 
 It connects to T24 using HTTP-GET (up to R16) or HTTP-POST (R17 and later) to perfom OFS requests.
 You need to be able to create a jboss-user in T24.
